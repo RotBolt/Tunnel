@@ -1,22 +1,26 @@
 package io.rot.labs.tunnel.controller
 
+import io.rot.labs.tunnel.regisrtyClass.RegistryClass
+import io.rot.labs.tunnel.message.TunnelMessage
+
+
 interface Controller {
 
     /**
      *  register this object to receive the events in @Subscribed methods
      */
-    fun register(parentObject: Any)
+    fun <T : Any> register(registryClass: RegistryClass<T>)
 
 
     /**
      *  send the message object to desired channel
      */
-    fun post(msgObject: Any, vararg channelIds: String)
+    fun <T : Any> post(tunnelMessage: TunnelMessage<T>, vararg channelIds: String)
 
     /**
      *  unregister this object to receive the events in @Subscribed methods
      */
-    fun unregister(parentObject: Any)
+    fun <T : Any> unregister(registryClass: RegistryClass<T>)
 
 
 }

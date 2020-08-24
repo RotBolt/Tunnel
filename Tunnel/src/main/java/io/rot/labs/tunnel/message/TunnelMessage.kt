@@ -1,7 +1,10 @@
 package io.rot.labs.tunnel.message
 
-data class TunnelMessage(
-    val key: String,
-    val msgObject: Any,
-    val channelId: String
+
+/**
+ *  Tunnel Message Object
+ *  Object which is actually posted and delivered to Target annotated with @Subsribe
+ */
+data class TunnelMessage<T:Any>(
+    val messageObject: T
 )

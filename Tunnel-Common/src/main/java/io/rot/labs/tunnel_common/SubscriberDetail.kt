@@ -4,7 +4,8 @@ import io.rot.labs.tunnel_common.utils.DispatcherType
 
 
 data class SubscriberDetail(
-    val invokerClassName :String,
-    val methodName : String,
-    val dispatcherType : DispatcherType
+    val invokerClassName: String,
+    val methodName: String,
+    val messageObjClass: Class<*>,
+    val dispatcherType: DispatcherType
 )

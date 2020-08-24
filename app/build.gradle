@@ -10,7 +10,7 @@ android {
     buildToolsVersion "30.0.1"
 
     defaultConfig {
-        applicationId "io.rot.labs.tunnel"
+        applicationId "io.rot.labs.tunnelapp"
         minSdkVersion 21
         targetSdkVersion 30
         versionCode 1

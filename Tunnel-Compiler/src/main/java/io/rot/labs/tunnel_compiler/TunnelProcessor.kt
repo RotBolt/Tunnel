@@ -4,6 +4,9 @@ import com.squareup.kotlinpoet.*
 import com.squareup.kotlinpoet.ParameterizedTypeName.Companion.parameterizedBy
 import io.rot.labs.tunnel_common.SubscriberDetail
 import io.rot.labs.tunnel_common.annotation.Subscribe
+import io.rot.labs.tunnel_common.utils.NameStore.GENERATED_ROOT_PACKAGE
+import io.rot.labs.tunnel_common.utils.DispatcherType
+import io.rot.labs.tunnel_common.utils.NameStore
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Messager
@@ -18,9 +21,9 @@ import javax.tools.Diagnostic
 
 class TunnelProcessor : AbstractProcessor() {
 
+    private lateinit var messager: Messager
+    private lateinit var elementUtils: Elements
 
-    lateinit var messager: Messager
-    lateinit var elementUtils: Elements
     override fun init(p0: ProcessingEnvironment) {
         super.init(p0)
         messager = p0.messager
@@ -31,41 +34,39 @@ class TunnelProcessor : AbstractProcessor() {
         annotations: MutableSet<out TypeElement>,
         roundEnv: RoundEnvironment
     ): Boolean {
-        val tunnelMap = ConcurrentHashMap<String, ArrayList<SubscriberDetail>>()
+        if (!roundEnv.processingOver()) {
+            val tunnelMap = ConcurrentHashMap<String, ArrayList<SubscriberDetail>>()
 
-        var rootPackage = ""
-        for (rootElement in roundEnv.rootElements) {
-            rootPackage = elementUtils.getPackageOf(rootElement).qualifiedName.toString()
-            break
-        }
+            val rootPackage = GENERATED_ROOT_PACKAGE
 
-
-        if (rootPackage.isNotEmpty()) {
-            val generatedClassName = ClassName(rootPackage, "TunnelMap")
+            val generatedClassName = ClassName(rootPackage, NameStore.MAP_CLASS_NAME)
 
             val arrayListTypeName =
-                ArrayList::class.asClassName().parameterizedBy(SubscriberDetail::class.asTypeName())
+                ArrayList::class.asClassName()
+                    .parameterizedBy(SubscriberDetail::class.asTypeName())
             val hashMapTypeName =
-                ConcurrentHashMap::class.asClassName().parameterizedBy(STRING, arrayListTypeName)
-            val mapProperty = PropertySpec.builder("map", hashMapTypeName, KModifier.PRIVATE)
-                .initializer(
-                    "%T<%T,%T<%T>>()",
-                    ConcurrentHashMap::class,
-                    String::class,
-                    ArrayList::class,
-                    SubscriberDetail::class
-                )
-                .build()
+                ConcurrentHashMap::class.asClassName()
+                    .parameterizedBy(STRING, arrayListTypeName)
+            val mapProperty =
+                PropertySpec.builder(NameStore.MAP_PROPERTY, hashMapTypeName, KModifier.PRIVATE)
+                    .initializer(
+                        "%T<%T,%T<%T>>()",
+                        ConcurrentHashMap::class,
+                        String::class,
+                        ArrayList::class,
+                        SubscriberDetail::class
+                    )
+                    .build()
 
             val classBuilder = TypeSpec.objectBuilder(generatedClassName)
                 .addModifiers(KModifier.PUBLIC)
                 .addProperty(mapProperty)
                 .addFunction(
-                    FunSpec.builder("getMap")
+                    FunSpec.builder(NameStore.MAP_FUN_NAME)
                         .addModifiers(KModifier.PUBLIC)
                         .returns(hashMapTypeName)
                         .addAnnotation(JvmStatic::class)
-                        .addStatement("return map")
+                        .addStatement("return ${NameStore.MAP_PROPERTY}")
                         .build()
                 )
 
@@ -85,10 +86,12 @@ class TunnelProcessor : AbstractProcessor() {
                         }
                         val invokerClassName = element.enclosingElement.asType().toString()
                         val methodName = element.simpleName.toString()
+                        val messageObjectClass = Class.forName(msgObjectType.toString())
                         subscribeDetailList.add(
                             SubscriberDetail(
                                 invokerClassName,
                                 methodName,
+                                messageObjectClass,
                                 subscribe.dispatcherType
                             )
                         )
@@ -101,23 +104,27 @@ class TunnelProcessor : AbstractProcessor() {
                 val sb = StringBuilder("arrayListOf(")
                 for (subscribeObj in entry.value) {
                     with(subscribeObj) {
-                        sb.append("SubscriberDetail(\"${invokerClassName}\",\"${methodName}\",${dispatcherType::class.simpleName}.${dispatcherType.name}),")
+                        sb.append("${SubscriberDetail::class.simpleName}(\"${invokerClassName}\",\"${methodName}\",Class.forName(\"${messageObjClass.canonicalName}\"),${dispatcherType::class.simpleName}.${dispatcherType.name}),")
                     }
                 }
                 val arrayListStr = sb.toString()
                 val modArrayListStr = arrayListStr.substring(0, arrayListStr.length - 1) + ")"
 
-                codeBlockBuilder.addStatement("map.put(\"${entry.key}\",${modArrayListStr})")
+                codeBlockBuilder.addStatement("${NameStore.MAP_PROPERTY}.put(\"${entry.key}\",${modArrayListStr})")
             }
 
             classBuilder.addInitializerBlock(codeBlockBuilder.build())
 
-            val fileBuilder = FileSpec.builder(rootPackage, "TunnelMap")
-                .addImport("io.rot.labs.tunnel_common.utils", "DispatcherType")
+            val fileBuilder = FileSpec.builder(rootPackage, NameStore.MAP_CLASS_NAME)
+                .addImport(
+                    NameStore.COMMON_UTILS_PACKAGE,
+                    DispatcherType::class.simpleName.toString()
+                )
                 .addType(classBuilder.build())
 
             fileBuilder.build().writeTo(processingEnv.filer)
             messager.printMessage(Diagnostic.Kind.WARNING, "SIZE ${tunnelMap.size}")
+
         }
         return true
     }

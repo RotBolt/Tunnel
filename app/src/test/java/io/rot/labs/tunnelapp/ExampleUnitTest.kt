@@ -1,4 +1,4 @@
-package io.rot.labs.tunnel
+package io.rot.labs.tunnelapp
 
 import org.junit.Test
 

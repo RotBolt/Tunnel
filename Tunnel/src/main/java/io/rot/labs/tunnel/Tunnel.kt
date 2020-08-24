@@ -1,25 +1,28 @@
 package io.rot.labs.tunnel
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
+import io.rot.labs.tunnel.controller.TunnelController
+import io.rot.labs.tunnel.dispatcherProvider.DispatcherProvider
+import io.rot.labs.tunnel.message.TunnelMessage
+import io.rot.labs.tunnel.regisrtyClass.RegistryClass
+import io.rot.labs.tunnel.tunnelChannel.TunnelChannelImpl
+import io.rot.labs.tunnel_common.SubscriberDetail
+import io.rot.labs.tunnel_common.utils.NameStore
 import kotlinx.coroutines.InternalCoroutinesApi
-import kotlinx.coroutines.channels.BroadcastChannel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.FlowCollector
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.launch
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.CoroutineContext
 
+@InternalCoroutinesApi
+class Tunnel private constructor() {
 
-class Tunnel {
-    var pipe = BroadcastChannel<Any>(Channel.BUFFERED)
-    private var pipeFlow = pipe.asFlow().apply {
-        flowOn(Dispatchers.Main)
+    private var tunnelController: TunnelController
+
+    init {
+        val mapClass =
+            Class.forName("${NameStore.GENERATED_ROOT_PACKAGE}.${NameStore.MAP_CLASS_NAME}")
+        val method = mapClass.getMethod(NameStore.MAP_FUN_NAME)
+        val map = method.invoke(null) as ConcurrentHashMap<String, ArrayList<SubscriberDetail>>
+        tunnelController =
+            TunnelController(map, hashMapOf(), DispatcherProvider(), TunnelChannelImpl())
     }
-
 
     companion object {
         private var tunnel: Tunnel? = null
@@ -35,36 +38,15 @@ class Tunnel {
         }
     }
 
-    fun send(scope: CoroutineScope, drop: Any) {
-        scope.launch() {
-            println("BROADCAST $drop")
-            pipe.send(drop)
-        }
+    fun <T : Any> register(registryClass: RegistryClass<T>) {
+        tunnelController.register(registryClass)
     }
 
-    fun setDispatcher(coroutineContext: CoroutineContext) {
-        pipeFlow.flowOn(coroutineContext)
+    fun <T : Any> unregister(registryClass: RegistryClass<T>) {
+        tunnelController.unregister(registryClass)
     }
 
-    fun subscribe(scope: CoroutineScope, action: (Any) -> Unit) {
-        scope.launch {
-            pipeFlow.collect(object : FlowCollector<Any> {
-                override suspend fun emit(value: Any) {
-                    println("INCOMING $value")
-                    action.invoke(value)
-                }
-            })
-
-            pipeFlow.collect {
-
-            }
-        }
-    }
-
-    fun init() {
-        val mapClass = Class.forName("io.rot.labs.tunnel.TunnelMap")
-        val method = mapClass.getMethod("getMap")
-        val map = method.invoke(null) as ConcurrentHashMap<*, *>
-        println("PUI MAP ${map.size}")
+    fun <T : Any> post(tunnelMessage: TunnelMessage<T>, vararg channelIds: String) {
+        tunnelController.post(tunnelMessage, *channelIds)
     }
 }
