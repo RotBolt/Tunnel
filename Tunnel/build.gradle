@@ -1,6 +1,7 @@
 plugins {
     id 'java-library'
     id 'kotlin'
+    id 'kotlin-kapt'
 }
 
 java {
@@ -23,4 +24,8 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutine_version"
     api project(':Tunnel-Common')
+    kaptTest project(":Tunnel-Compiler")
+    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'org.mockito:mockito-core:2.19.0'
+    testImplementation 'org.jetbrains.kotlinx:kotlinx-coroutines-test:1.4.1'
 }

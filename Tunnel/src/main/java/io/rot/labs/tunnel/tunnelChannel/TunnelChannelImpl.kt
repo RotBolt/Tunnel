@@ -2,6 +2,7 @@ package io.rot.labs.tunnel.tunnelChannel
 
 import io.rot.labs.tunnel.collectorProvider.CollectorProvider
 import io.rot.labs.tunnel.dispatcherProvider.DispatcherProvider
+import io.rot.labs.tunnel.dispatcherProvider.DispatcherProviderImpl
 import io.rot.labs.tunnel.message.TunnelBundle
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.InternalCoroutinesApi

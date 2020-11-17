@@ -1,9 +1,9 @@
 package io.rot.labs.tunnelapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import io.rot.labs.tunnel.Tunnel
-import io.rot.labs.tunnel.TunnelMap
 import io.rot.labs.tunnel.message.TunnelMessage
 import io.rot.labs.tunnel.regisrtyClass.RegistryClass
 import io.rot.labs.tunnel_common.annotation.Subscribe
@@ -13,7 +13,7 @@ import kotlinx.coroutines.*
 import kotlin.coroutines.CoroutineContext
 
 @InternalCoroutinesApi
-class MainActivity : AppCompatActivity(), CoroutineScope {
+open class MainActivity : AppCompatActivity(), CoroutineScope {
 
 
     override val coroutineContext: CoroutineContext = SupervisorJob() + Dispatchers.Main
@@ -25,9 +25,26 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
         launch {
             delay(5000)
             Tunnel.get().post(TunnelMessage(Bundle().apply {
-                putString("PUI", "Oppai")
+                putString("PUI", "Oppaaaaaai")
             }), "CHANNEL_1")
         }
+
+        btnSendEvents.setOnClickListener {
+            send200kEvents()
+        }
+    }
+
+    fun send200kEvents() {
+        val startTime = System.currentTimeMillis()
+        for (i in 0..200_000) {
+            Tunnel.get().post(TunnelMessage(Bundle().apply {
+                putString("PUI", i.toString())
+            }),"CHANNEL_1")
+        }
+        val timeTook = System.currentTimeMillis() - startTime
+        Tunnel.get().post(TunnelMessage(Bundle().apply {
+            putString("PUI", "Time took $timeTook")
+        }), "CHANNEL_2")
     }
 
     override fun onStart() {
@@ -42,7 +59,9 @@ class MainActivity : AppCompatActivity(), CoroutineScope {
     }
 
     @Subscribe(dispatcherType = DispatcherType.IO, channelIds = ["CHANNEL_1", "CHANNEL_2"])
-    fun puiOnEvent(name: Bundle) {
-        tvPUI.text = name["PUI"].toString()
+    open fun puiOnEvent(name: Bundle) {
+        val string = name["PUI"].toString()
+        Log.d("PUI", "RecievedValue $string")
+        tvPUI.text = "Received Value $string"
     }
 }

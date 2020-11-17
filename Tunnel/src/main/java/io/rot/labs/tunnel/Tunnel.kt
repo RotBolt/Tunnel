@@ -2,6 +2,7 @@ package io.rot.labs.tunnel
 
 import io.rot.labs.tunnel.controller.TunnelController
 import io.rot.labs.tunnel.dispatcherProvider.DispatcherProvider
+import io.rot.labs.tunnel.dispatcherProvider.DispatcherProviderImpl
 import io.rot.labs.tunnel.message.TunnelMessage
 import io.rot.labs.tunnel.regisrtyClass.RegistryClass
 import io.rot.labs.tunnel.tunnelChannel.TunnelChannelImpl
@@ -13,24 +14,32 @@ import java.util.concurrent.ConcurrentHashMap
 @InternalCoroutinesApi
 class Tunnel private constructor() {
 
-    private var tunnelController: TunnelController
+    private lateinit var tunnelController: TunnelController
 
-    init {
+    private var dispatcherProvider: DispatcherProvider? = null
+
+    private fun init(dispatcherProvider: DispatcherProvider) {
         val mapClass =
             Class.forName("${NameStore.GENERATED_ROOT_PACKAGE}.${NameStore.MAP_CLASS_NAME}")
         val method = mapClass.getMethod(NameStore.MAP_FUN_NAME)
         val map = method.invoke(null) as ConcurrentHashMap<String, ArrayList<SubscriberDetail>>
         tunnelController =
-            TunnelController(map, hashMapOf(), DispatcherProvider(), TunnelChannelImpl())
+            TunnelController(
+                map,
+                hashMapOf(),
+                dispatcherProvider,
+                TunnelChannelImpl()
+            )
     }
 
     companion object {
         private var tunnel: Tunnel? = null
-        fun get(): Tunnel {
+        fun get(customDispatcherProvider: DispatcherProvider = DispatcherProviderImpl()): Tunnel {
             if (tunnel == null) {
                 synchronized(Tunnel::class) {
                     if (tunnel == null) {
                         tunnel = Tunnel()
+                        tunnel!!.init(customDispatcherProvider)
                     }
                 }
             }
@@ -46,7 +55,7 @@ class Tunnel private constructor() {
         tunnelController.unregister(registryClass)
     }
 
-    fun <T : Any> post(tunnelMessage: TunnelMessage<T>, vararg channelIds: String) {
+    fun <T : Any> post(tunnelMessage: TunnelMessage<T>, vararg channelIds: String = arrayOf("default")) {
         tunnelController.post(tunnelMessage, *channelIds)
     }
 }

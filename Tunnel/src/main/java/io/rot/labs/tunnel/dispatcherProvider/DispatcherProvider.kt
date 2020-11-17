@@ -5,16 +5,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.newSingleThreadContext
 
-class DispatcherProvider {
+interface DispatcherProvider {
+    fun provideMainDispatcher(): CoroutineDispatcher
 
-    fun provideMainDispatcher(): CoroutineDispatcher = Dispatchers.Main
+    fun provideIoDispatcher(): CoroutineDispatcher
 
-    fun provideIoDispatcher(): CoroutineDispatcher = Dispatchers.IO
+    fun provideComputationDispatcher(): CoroutineDispatcher
 
-    fun provideComputationDispatcher(): CoroutineDispatcher = Dispatchers.Default
-
-    @OptIn(ObsoleteCoroutinesApi::class)
-    fun provideSingleThreadDispatcher(name: String = "SingleThread"): CoroutineDispatcher =
-        newSingleThreadContext(name)
-
+    fun provideSingleThreadDispatcher(name: String = "SingleThread"): CoroutineDispatcher
 }

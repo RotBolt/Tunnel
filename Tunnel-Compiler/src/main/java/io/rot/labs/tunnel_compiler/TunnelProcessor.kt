@@ -7,6 +7,7 @@ import io.rot.labs.tunnel_common.annotation.Subscribe
 import io.rot.labs.tunnel_common.utils.NameStore.GENERATED_ROOT_PACKAGE
 import io.rot.labs.tunnel_common.utils.DispatcherType
 import io.rot.labs.tunnel_common.utils.NameStore
+import java.lang.Exception
 import java.util.concurrent.ConcurrentHashMap
 import javax.annotation.processing.AbstractProcessor
 import javax.annotation.processing.Messager
@@ -35,7 +36,7 @@ class TunnelProcessor : AbstractProcessor() {
         roundEnv: RoundEnvironment
     ): Boolean {
         if (!roundEnv.processingOver()) {
-            val tunnelMap = ConcurrentHashMap<String, ArrayList<SubscriberDetail>>()
+            val tunnelMap = ConcurrentHashMap<String, ArrayList<SubscriberDetailHolder>>()
 
             val rootPackage = GENERATED_ROOT_PACKAGE
 
@@ -79,19 +80,19 @@ class TunnelProcessor : AbstractProcessor() {
                 if (subscribe != null) {
                     for (channelId in subscribe.channelIds) {
                         val key = "${msgObjectType}_$channelId"
-                        messager.printMessage(Diagnostic.Kind.WARNING, "Produced Key : $key")
+                        messager.printMessage(Diagnostic.Kind.NOTE, "Produced Key : $key")
                         var subscribeDetailList = tunnelMap[key]
+
                         if (subscribeDetailList == null) {
                             subscribeDetailList = ArrayList()
                         }
                         val invokerClassName = element.enclosingElement.asType().toString()
                         val methodName = element.simpleName.toString()
-                        val messageObjectClass = Class.forName(msgObjectType.toString())
                         subscribeDetailList.add(
-                            SubscriberDetail(
+                            SubscriberDetailHolder(
                                 invokerClassName,
                                 methodName,
-                                messageObjectClass,
+                                msgObjectType.toString(),
                                 subscribe.dispatcherType
                             )
                         )
@@ -99,12 +100,12 @@ class TunnelProcessor : AbstractProcessor() {
                     }
                 }
             }
-
             for (entry in tunnelMap.entries) {
                 val sb = StringBuilder("arrayListOf(")
+                messager.printMessage(Diagnostic.Kind.NOTE, "TunnelMap size ${tunnelMap.size}")
                 for (subscribeObj in entry.value) {
                     with(subscribeObj) {
-                        sb.append("${SubscriberDetail::class.simpleName}(\"${invokerClassName}\",\"${methodName}\",Class.forName(\"${messageObjClass.canonicalName}\"),${dispatcherType::class.simpleName}.${dispatcherType.name}),")
+                        sb.append("${SubscriberDetail::class.simpleName}(\"${invokerClassName}\",\"${methodName}\",Class.forName(\"${messageObjClass}\"),${dispatcherType::class.simpleName}.${dispatcherType.name}),")
                     }
                 }
                 val arrayListStr = sb.toString()

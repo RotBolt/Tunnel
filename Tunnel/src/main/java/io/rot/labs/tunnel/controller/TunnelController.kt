@@ -3,6 +3,7 @@ package io.rot.labs.tunnel.controller
 import io.rot.labs.tunnel.regisrtyClass.RegistryClass
 import io.rot.labs.tunnel.collectorProvider.CollectorProvider
 import io.rot.labs.tunnel.dispatcherProvider.DispatcherProvider
+import io.rot.labs.tunnel.dispatcherProvider.DispatcherProviderImpl
 import io.rot.labs.tunnel.message.TunnelBundle
 import io.rot.labs.tunnel.message.TunnelMessage
 import io.rot.labs.tunnel.tunnelChannel.TunnelChannel
@@ -20,7 +21,7 @@ import kotlin.coroutines.CoroutineContext
 class TunnelController(
     private val map: ConcurrentHashMap<String, ArrayList<SubscriberDetail>>,
     private val registryMap: HashMap<String, Any>,
-    private val dispatcherProvider: DispatcherProvider,
+    private var dispatcherProvider: DispatcherProvider,
     private val tunnelChannel: TunnelChannel
 ) : Controller, CoroutineScope {
 
