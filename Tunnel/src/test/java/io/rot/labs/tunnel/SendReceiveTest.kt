@@ -69,7 +69,7 @@ class SendReceiveTest {
                 latch.countDown()
             })
         }
-        assertTrue(latch.await(2, TimeUnit.SECONDS))
+        assertTrue(latch.await(10, TimeUnit.SECONDS))
         assertTrue(hugeTarget.myMessageList.isNotEmpty())
         assertTrue(hugeTarget.myMessageList.size == 100_000)
     }
