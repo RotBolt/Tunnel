@@ -2,6 +2,7 @@
 
 ![Tunnel CI](https://github.com/RotBolt/Tunnel/workflows/Tunnel%20CI/badge.svg)
 [![codecov](https://codecov.io/gh/RotBolt/Tunnel/branch/master/graph/badge.svg?token=0W22SELVXO)](https://codecov.io/gh/RotBolt/Tunnel)
+[![jitpack](https://jitpack.io/v/RotBolt/Tunnel.svg)](https://jitpack.io/#RotBolt/Tunnel)
 
 Tunnel is Pub-Sub library inspired from [NYBus](https://github.com/MindorksOpenSource/NYBus)
 It made with Kotlin Coroutines, Channes and Flow
@@ -16,6 +17,27 @@ It made with Kotlin Coroutines, Channes and Flow
 Target Map is generated and perisisted as `TunnelMap` class.
 
 - `TunnelMap` is used by **Tunnel** module to post the message object to correct `Subscribed` target
+
+## Setup
+
+
+Add it in your root build.gradle at the end of repositories:
+
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+
+Step 2. Add the dependency. (latest_tag = v0.0.1 )
+
+```
+	dependencies {
+	        implementation 'com.github.RotBolt:Tunnel:latest_tag'
+                kapt 'com.github.RotBolt:Tunnel-Compiler:latest_tag'
+	}
+```
 
 
 ## Usage
