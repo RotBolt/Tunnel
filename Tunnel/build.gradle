@@ -2,11 +2,16 @@ plugins {
     id 'java-library'
     id 'kotlin'
     id 'kotlin-kapt'
+    id 'jacoco'
 }
 
 java {
     sourceCompatibility = JavaVersion.VERSION_1_8
     targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+jacoco{
+    toolVersion = "$jacoco_version"
 }
 
 compileKotlin {
@@ -19,6 +24,19 @@ compileKotlin {
         ]
     }
 }
+
+test {
+    finalizedBy jacocoTestReport // report is always generated after tests run
+}
+
+jacocoTestReport {
+    dependsOn test // tests are required to run before generating the report
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
 
 dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"

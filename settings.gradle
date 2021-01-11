@@ -1,5 +1,5 @@
+rootProject.name = "Tunnel"
 include ':Tunnel-Common'
 include ':Tunnel-Compiler'
-rootProject.name = "Tunnel"
-include ':app'
 include ':Tunnel'
+include ':app'
