@@ -15,6 +15,7 @@ buildscript {
 }
 
 subprojects {
+    apply plugin: 'maven'
     group = 'io.rot.labs'
     version = '0.0.1'
     repositories {

@@ -3,7 +3,6 @@ plugins {
     id 'kotlin'
     id 'kotlin-kapt'
     id 'jacoco'
-    id 'maven'
 }
 
 java {
